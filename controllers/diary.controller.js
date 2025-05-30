@@ -383,53 +383,48 @@ const emotionOnly = async (req, res) => {
   }
 };
 
-  // 그 날짜 있는지 체크 
-  const checkTodayWritten = async (req, res) => {
-    const excludeId = Number(req.query.excludeId);
-    const userId = req.user.uid;
-    const oneSecondAgo = new Date(now.getTime() - 1 * 1000);
-    const now = new Date();
-    const KST_OFFSET = 1 * 1000;
-    const koreaNow = new Date(now.getTime() + KST_OFFSET);
-    const today = new Date().toISOString().split('T')[0];
-    // const start = `${today} 00:00:00`;
-    // const end = `${today} 23:59:59`;
-    const start = new Date(koreaNow);
-      start.setHours(0, 0, 0, 0);
+// 그날 일기 or 감정 체크리스트 
+const checkTodayWritten = async (req, res) => {
+  const excludeId = Number(req.query.excludeId);
+  const userId = req.user.uid;
 
-    const end = new Date(koreaNow);
-    end.setHours(23, 59, 59, 999);
+  const now = new Date();
+  const KST_OFFSET = 9 * 60 * 60 * 1000;
+  const koreaNow = new Date(now.getTime() + KST_OFFSET);
 
+  // 오늘 00:00:00 ~ 23:59:59 (KST)
+  const start = new Date(koreaNow);
+  start.setHours(0, 0, 0, 0);
 
+  const end = new Date(koreaNow);
+  end.setHours(23, 59, 59, 999);
 
-    try {
-      const diary = await Diary.findOne({
-        where: {
-          user_id: userId,
-          createdAt: {
-            // [Op.between]: [start, end]
-            [Op.gt]: oneSecondAgo
-            // [Op.between]: [oneMinuteAgo, now]
-          },
-          ...(excludeId && { id: { [Op.ne]: excludeId } })
-        }
-      });
-      const emotion = await DiaryEmotion.findOne({
-        where: {
-          user_id: userId,
-          date: today
-        }
-      });
+  try {
+    const diary = await Diary.findOne({
+      where: {
+        user_id: userId,
+        createdAt: {
+          [Op.between]: [start, end]
+        },
+        ...(excludeId && { id: { [Op.ne]: excludeId } })
+      }
+    });
 
-        const hasWritten = !!diary || !!emotion;
-      return res.json({ hasWritten });
-    } catch (err) {
-      console.error(err);
-      return res.status(500).json({ message: '작성 여부 확인 실패' });
-    }
+    const emotion = await DiaryEmotion.findOne({
+      where: {
+        user_id: userId,
+        date: start.toISOString().split('T')[0] // YYYY-MM-DD
+      }
+    });
 
+    const hasWritten = !!diary || !!emotion;
+    return res.json({ hasWritten });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: '작성 여부 확인 실패' });
+  }
+};
 
-  };
 
 // 스트림 
 const getStreak = async (req, res) => {
