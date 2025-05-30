@@ -3,6 +3,7 @@ const { getEmotions } = require('../controllers/emotion.controller');
 const { getMyDiaryList, emotionOnly, checkTodayWritten } = require('../controllers/diary.controller');
 const authMiddleware = require('../middleware/auth');
 const { getStreak, getWrittenDates, getWrittenWeekdays,  getFollowedDiaryList } = require('../controllers/diary.controller')
+const authAppMiddleware = require('../middleware/authAppMiddleware');
 
 //  모든 감정
 router.get('/emotionAll', getEmotions);
@@ -22,5 +23,7 @@ router.get('/written-weekdays',authMiddleware, getWrittenWeekdays);
 router.get('/written-dates', authMiddleware, getWrittenDates);
 
 
+//------------ 앱 라우터
+router.get('/app/mydiary', authAppMiddleware, getMyDiaryList);
 
 module.exports = router;

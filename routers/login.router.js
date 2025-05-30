@@ -6,6 +6,7 @@ const router = express.Router();
 const { saveKakaoUser, searchUsersByNickname, getUserById } = require('../controllers/login.controller');
 const { Users } = require('../models/config');
 const authMiddleware = require('../middleware/auth');
+const authAppMiddleware = require('../middleware/authAppMiddleware');
 
 router.get('/kakao', (req, res) => {
   const kakaoAuthUrl = `https://kauth.kakao.com/oauth/authorize?response_type=code&client_id=${process.env.KAKAO_CLIENT_ID}&redirect_uri=${process.env.KAKAO_REDIRECT_URI}`;
@@ -79,31 +80,38 @@ router.get('/user', authMiddleware, (req, res) => {
 });
 
 
+//------------ 앱 라우터
+router.get('/app/user', authAppMiddleware, (req, res) => {
+  const user = req.user;
+  res.json({
+    nickname: user.nick_name,
+    profile: user.profile_image,
+    uid: user.uid,
+    bio: user.bio
+  });
+});
+
 router.post('/kakaoapp', async (req, res) => {
-  const { access_token } = req.body;
-  if (!access_token) {
-    return res.status(400).json({ message: 'access_token 누락' });
+  const { id, nickname, properties, userAccessToken } = req.body;
+
+  if (!userAccessToken || !id || !nickname) {
+    return res.status(400).json({ message: '필수 정보 누락' });
   }
 
   try {
-    const userRes = await axios.get('https://kapi.kakao.com/v2/user/me', {
-      headers: {
-        Authorization: `Bearer ${access_token}`,
-      },
-    });
+    const kakaoId = Number(id);
+    const profile = properties?.profile_image ?? '';
 
-    const kakaoUser = userRes.data;
-    const kakaoId = Number(kakaoUser.id);
-    const nickname = kakaoUser.properties?.nickname ?? '';
-    const profile = kakaoUser.properties?.profile_image ?? '';
-    // 요 라인이 DB저장쪽임 
+    // DB에 유저 저장
     const { ok, user, message } = await saveKakaoUser(kakaoId, nickname, profile);
     if (!ok) return res.status(500).json({ message });
 
+    // JWT 토큰 발급
     const token = jwt.sign({ userId: user.uid }, process.env.JWT_SECRET, {
-      expiresIn: '7d',
+      expiresIn: '30d',
     });
 
+    // 프론트로 응답
     res.json({
       token,
       user: {
@@ -117,6 +125,9 @@ router.post('/kakaoapp', async (req, res) => {
     res.status(500).json({ message: '카카오 로그인 실패' });
   }
 });
+
+
+
 router.get('/search/users', searchUsersByNickname);
 router.get('/:id', getUserById); 
 

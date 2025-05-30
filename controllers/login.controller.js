@@ -64,6 +64,7 @@ const getUserStatsById = async (req, res) => {
  const getUserById = async (req, res) => {
   try {
     const uid = Number(req.params.id);
+    console.log('getUserById: 전달된 uid:', req.params.id, '변환된 uid:', uid);
     const user = await User.findByPk(uid, {
       attributes: ['uid', 'nick_name', 'profile_image', 'bio']
     });
