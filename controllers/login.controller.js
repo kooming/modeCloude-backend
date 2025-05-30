@@ -1,7 +1,7 @@
 const { User, Diary, Follow } = require('../models/config');
+const { Op } = require('sequelize')
 
-
- saveKakaoUser = async (kakaoId, nickname, profile) => {
+const saveKakaoUser = async (kakaoId, nickname, profile) => {
   try {
     const [user, created] = await User.findOrCreate({
       where: { uid: kakaoId },                     
@@ -31,6 +31,10 @@ const getUserStatsById = async (req, res) => {
     const followerCount = await Follow.count({ where: { following_id: userId } });
     const followingCount = await Follow.count({ where: { follower_id: userId } });
 
+      const user = await User.findByPk(userId, {
+        attributes: ['bio'] 
+      });
+
     res.json({
       success: true,
       data: { diaryCount, followerCount, followingCount }
@@ -41,30 +45,39 @@ const getUserStatsById = async (req, res) => {
   }
 };
 
+ const searchUsersByNickname = async (req, res) => {
+  try {
+    const { q } = req.query;
+    const users = await User.findAll({
+      where: {
+        nick_name: { [Op.like]: `%${q}%` }
+      },
+      attributes: ['uid', 'nick_name', 'profile_image']
+    });
+    res.json({ users });
+  } catch (err) {
+    console.error('유저 검색 실패:', err);
+    res.status(500).json({ message: '검색 실패' });
+  }
+};
+
+ const getUserById = async (req, res) => {
+  try {
+    const uid = Number(req.params.id);
+    const user = await User.findByPk(uid, {
+      attributes: ['uid', 'nick_name', 'profile_image', 'bio']
+    });
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: '유저를 찾을 수 없습니다.' });
+    }
+
+    res.json(user);
+  } catch (err) {
+    console.error('유저 조회 실패:', err);
+    res.status(500).json({ success: false, message: '유저 조회 중 오류 발생' });
+  }
+};
 
 
-
-// const getUserStats = async (req, res) => {
-//   try {
-//     const userId = req.user.uid;
-//     console.log('📌 userId:', userId);
-//     const diaryCount = await Diary.count({ where: { user_id: userId } });
-//     const followerCount = await Follow.count({ where: { following_id: userId } });
-//     const followingCount = await Follow.count({ where: { follower_id: userId } });
-//     console.log('📊 followerCount:', followerCount);
-//     console.log('📊 followingCount:', followingCount);
-//     res.json({
-//       success: true,
-//       data: {
-//         diaryCount,
-//         followerCount,
-//         followingCount,
-//       },
-//     });
-//   } catch (err) {
-//     console.error('통계 정보 조회 실패:', err);
-//     res.status(500).json({ success: false, message: '정보 조회 실패' });
-//   }
-// };
-
-module.exports = { saveKakaoUser, getUserStatsById };
+module.exports = { saveKakaoUser, getUserStatsById, searchUsersByNickname, getUserById };

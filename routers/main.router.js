@@ -6,25 +6,18 @@ const { getStreak, getWrittenDates, getWrittenWeekdays,  getFollowedDiaryList } 
 
 //  모든 감정
 router.get('/emotionAll', getEmotions);
-
 // 나의 최근 일기만
 router.get('/mydiary', authMiddleware, getMyDiaryList);
-
 // 팔로우한 사람들 일기
 router.get('/diary/followed', authMiddleware, getFollowedDiaryList);
-
 // 감정만 저장
 router.post('/emotionOnly', emotionOnly);
-
 // 감정이나 일기쓰면 사라지게 하는 get 요청 
 router.get('/checkTodayWritten', authMiddleware , checkTodayWritten);
-
 // 스트릭 
 router.get('/streak',authMiddleware, getStreak);
-
 // 요일 작성 
 router.get('/written-weekdays',authMiddleware, getWrittenWeekdays);
-
 // 달력 작성요일 
 router.get('/written-dates', authMiddleware, getWrittenDates);
 

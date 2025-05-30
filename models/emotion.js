@@ -10,11 +10,11 @@ class Emotion extends Model {
                 primaryKey: true
                 },
                 color : {
-                    type : DataTypes.STRING(20), // 색상 코드
+                    type : DataTypes.STRING(20), 
                     allowNull:true
                 },
                 name : {
-                  type : DataTypes.STRING(20), // 감정 이름  
+                  type : DataTypes.STRING(20),  
                   allowNull:false
                 },
                 emoji : {
@@ -33,7 +33,6 @@ class Emotion extends Model {
         )
     }
     static associate(models) {
-        // models.Emotion.hasMany(models.Diary, { foreignKey : "emotion_id", as : "userSelectedDiaries"});
         models.Emotion.hasMany(models.Diary, {foreignKey : "suggested_emotion_id", as: "suggestedDiaries" })
     }
 }

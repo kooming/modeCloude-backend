@@ -1,7 +1,8 @@
 const {Diary, DiaryEmotion, DiaryImg, Comment, User, Emotion, Follow } = require('../models/config')
 const { Op } = require('sequelize');
+
 const KST_OFFSET = 9 * 60 * 60 * 1000;
-// 이미지 URL 추출 함수
+
 const extractImageUrls = (markdown) => {
   const regex = /!\[.*?\]\((.*?)\)/g;
   const urls = [];
@@ -12,7 +13,7 @@ const extractImageUrls = (markdown) => {
   return urls;
 };
 
-// 나의 일기 목록 조회
+// 나의 일기 목록 조회  로그인한 유저 대상이라서
 const getMyDiaryList = async (req, res) => {
   const userId = req.user.uid;
 
@@ -29,7 +30,7 @@ const getMyDiaryList = async (req, res) => {
           include: [
             {
               model: Emotion,
-              as: 'userEmotionData',  // 사용자가 선택한 감정
+              as: 'userEmotionData',  
               attributes: ['id', 'name', 'emoji', 'color']
             }
           ]
@@ -63,6 +64,60 @@ const getMyDiaryList = async (req, res) => {
     res.status(500).json({ message: '일기 목록 불러오기 실패' });
   }
 };
+
+// 이건 그 마이페이지 공개된 일기 보여줄때 쓸거 
+const getPublicDiaryList = async (req, res) => {
+  const targetUid = Number(req.params.uid);
+
+  try {
+    const diaries = await Diary.findAll({
+      where: { user_id: targetUid, is_public: true },
+      order: [['createdAt', 'DESC']],
+      limit: 20,
+      attributes: ['id', 'title', 'is_public', 'createdAt'],
+      include: [
+        {
+          model: DiaryEmotion,
+          as: 'emotionLog',
+          include: [
+            {
+              model: Emotion,
+              as: 'userEmotionData',
+              attributes: ['id', 'name', 'emoji', 'color'],
+            },
+          ],
+        },
+        {
+          model: Comment,
+          as: 'comments',
+          attributes: ['id'],
+        },
+        {
+          model: DiaryImg,
+          as: 'images',
+          attributes: ['image_url'],
+        },
+      ],
+    });
+
+    const result = diaries.map((diary) => ({
+      id: diary.id,
+      title: diary.title,
+      createdAt: diary.createdAt,
+      isPublic: diary.is_public,
+      emotion: diary.emotionLog?.userEmotionData ?? null,
+      commentCount: diary.comments.length,
+      images: diary.images?.map((img) => img.image_url) ?? [],
+    }));
+
+    res.json(result);
+  } catch (error) {
+    console.error('공개 일기 조회 실패:', error);
+    res.status(500).json({ message: '공개 일기 조회 실패' });
+  }
+};
+
+
 
 // 이건 팔로우 상대 보기 
 const getFollowedDiaryList = async (req, res) => {
@@ -131,12 +186,10 @@ const getFollowedDiaryList = async (req, res) => {
   }
 };
 
-
 // 일기 생성
 const createDiary = async (req, res) => {
   try {
     const { title, content, user_id, userEmotion, diary_img, selectEmotion, is_public } = req.body;
-    console.log("받은 공개여부 is_public:", is_public); 
     const diary = await Diary.create({
       title,
       content,
@@ -154,7 +207,6 @@ const createDiary = async (req, res) => {
       await DiaryImg.bulkCreate(imgRows);
     }
 
-    // 3. 감정 로그 저장
     await DiaryEmotion.create({
       diary_id: diary.id,
       user_id: user_id,
@@ -249,7 +301,7 @@ const getDiaryForEdit = async (req, res) => {
 // 수정 데이터 바꾼 데이터 저장 
 const updateDiary = async (req, res) => {
   try {
-    const diaryId = Number(req.params.id); // 숫자 변환
+    const diaryId = Number(req.params.id); 
 
     // diary가 실제로 존재하는지 확인
     const diary = await Diary.findByPk(diaryId);
@@ -265,7 +317,6 @@ const updateDiary = async (req, res) => {
       selectEmotion
     } = req.body;
 
-    // 1. 일기 수정
     await Diary.update(
       {
         title,
@@ -275,12 +326,9 @@ const updateDiary = async (req, res) => {
       { where: { id: diaryId } }
     );
 
-    // 2. 기존 이미지 삭제
     await DiaryImg.destroy({ where: { diary_id: diaryId } });
 
-    // 3. 이미지 재추출 및 저장
     const imageUrls = extractImageUrls(content);
-    console.log('추출된 이미지 URL 목록:', imageUrls);
 
     if (imageUrls.length > 0) {
       const imgRows = imageUrls.map((url) => ({
@@ -339,9 +387,9 @@ const emotionOnly = async (req, res) => {
   const checkTodayWritten = async (req, res) => {
     const excludeId = Number(req.query.excludeId);
     const userId = req.user.uid;
-
+    const oneSecondAgo = new Date(now.getTime() - 1 * 1000);
     const now = new Date();
-    const KST_OFFSET = 9 * 60 * 60 * 1000;
+    const KST_OFFSET = 1 * 1000;
     const koreaNow = new Date(now.getTime() + KST_OFFSET);
     const today = new Date().toISOString().split('T')[0];
     // const start = `${today} 00:00:00`;
@@ -359,7 +407,8 @@ const emotionOnly = async (req, res) => {
         where: {
           user_id: userId,
           createdAt: {
-            [Op.between]: [start, end]
+            // [Op.between]: [start, end]
+            [Op.gt]: oneSecondAgo
             // [Op.between]: [oneMinuteAgo, now]
           },
           ...(excludeId && { id: { [Op.ne]: excludeId } })
@@ -371,7 +420,6 @@ const emotionOnly = async (req, res) => {
           date: today
         }
       });
-        // hasWriteen 둘중에 하나라도 그 날짜 있으면 true 반환 
 
         const hasWritten = !!diary || !!emotion;
       return res.json({ hasWritten });
@@ -385,9 +433,13 @@ const emotionOnly = async (req, res) => {
 
 // 스트림 
 const getStreak = async (req, res) => {
-  const userId = req.user.uid;
+  const userId = Number(req.query.uid); 
   const KST_OFFSET = 9 * 60 * 60 * 1000;
-  console.log('스트림 user_id:', userId);
+
+  if (!userId) {
+    return res.status(400).json({ message: 'uid 쿼리 파라미터가 필요합니다.' });
+  }
+
 
   try {
     const records = await Diary.findAll({
@@ -401,9 +453,6 @@ const getStreak = async (req, res) => {
         new Date(r.createdAt.getTime() + KST_OFFSET).toISOString().split('T')[0]
       )
     );
-
-    console.log('시간 목록', records.map(r => r.createdAt.toISOString()));
-    console.log('스트림 데이터 셋:', [...dateSet]);
 
     let current = new Date();
     current.setHours(0, 0, 0, 0);
@@ -421,7 +470,6 @@ const getStreak = async (req, res) => {
       }
     }
 
-    console.log('최종 스트림:', streak);
     res.json({ streak });
   } catch (error) {
     console.error('error', error);
@@ -429,13 +477,19 @@ const getStreak = async (req, res) => {
   }
 };
 
+
 // 요일 
 const getWrittenWeekdays = async (req, res) => {
-  const userId = req.user.uid;
-  console.log('[요일] user_id:', userId);
+  const userId = Number(req.query.uid);
+  const KST_OFFSET = 9 * 60 * 60 * 1000;
+
+  if (!userId) {
+    return res.status(400).json({ message: 'uid 쿼리 파라미터가 필요합니다.' });
+  }
+
 
   const today = new Date();
-  const end = new Date(today.getTime() + KST_OFFSET); // 오늘 (KST 기준)
+  const end = new Date(today.getTime() + KST_OFFSET);
   end.setHours(23, 59, 59, 999);
 
   const start = new Date(end);
@@ -458,12 +512,9 @@ const getWrittenWeekdays = async (req, res) => {
         const kstDate = new Date(r.createdAt.getTime() + KST_OFFSET);
         const ymd = kstDate.toISOString().slice(0, 10);
         const localDate = new Date(ymd);
-        return localDate.getDay(); // 0:일, 1:월, ..., 6:토
+        return localDate.getDay();
       })
     )];
-
-    console.log('요일쪽:', records.map(r => r.createdAt.toISOString()));
-    console.log('추출된 것:', weekdays);
 
     res.json({ weekdays });
   } catch (err) {
@@ -472,19 +523,20 @@ const getWrittenWeekdays = async (req, res) => {
   }
 };
 
+
 // 날짜 
 const getWrittenDates = async (req, res) => {
-  const userId = req.user.uid;
-  const { month } = req.query; // 예: "2025-05"
+  const userId = Number(req.query.uid);
+  const { month } = req.query;
+  const KST_OFFSET = 9 * 60 * 60 * 1000;
 
-  if (!month) return res.status(400).json({ message: 'month 파라미터 필요' });
+  if (!userId || !month) {
+    return res.status(400).json({ message: 'uid와 month 쿼리 파라미터가 필요합니다.' });
+  }
 
   const startDate = new Date(`${month}-01`);
   const endDate = new Date(startDate);
   endDate.setMonth(startDate.getMonth() + 1);
-
-  console.log('날짜 user_id:', userId);
-  console.log('날짜 검색 범위:', startDate.toISOString(), '~', endDate.toISOString());
 
   try {
     const records = await Diary.findAll({
@@ -502,7 +554,6 @@ const getWrittenDates = async (req, res) => {
       new Date(r.createdAt.getTime() + KST_OFFSET).toISOString().split('T')[0]
     );
 
-    console.log('날짜 결과:', dates);
     res.json(dates);
   } catch (err) {
     console.error('error:', err);
@@ -510,5 +561,22 @@ const getWrittenDates = async (req, res) => {
   }
 };
 
+
+const deleteDiary = async (req, res) => {
+  try {
+    const diaryId = Number(req.params.id);
+
+    const diary = await Diary.findByPk(diaryId);
+    if (!diary) {
+      return res.status(404).json({ success: false, message: '일기를 찾을 수 없습니다.' });
+    }
+    await diary.destroy(); 
+    res.json({ success: true, message: '일기가 성공적으로 삭제되었습니다.' });
+  } catch (error) {
+    console.error('일기 삭제 오류:', error);
+    res.status(500).json({ success: false, message: '일기 삭제 중 오류가 발생했습니다.' });
+  }
+};
+
 module.exports = { createDiary, getMyDiaryList, emotionOnly, checkTodayWritten, getStreak ,getWrittenWeekdays, getWrittenDates, getDiaryDetail ,  getDiaryDetail,
-  getDiaryForEdit, updateDiary, getFollowedDiaryList };
+  getDiaryForEdit, updateDiary, getFollowedDiaryList, deleteDiary, getPublicDiaryList };

@@ -18,13 +18,13 @@ const sequelize = new Sequalize(
     }
 )
 
-const user = User.init(sequelize);          // 가장 먼저 (다른 모델들이 많이 참조함)
-const emotion = Emotion.init(sequelize);      // 감정: 독립적
-const diary = Diary.init(sequelize);      // User 참조 (user_id)
-const follow = Follow.init(sequelize);        // User 참조 (follower_id, following_id)
-const comment = Comment.init(sequelize);      // User, Diary 참조
-const diaryImg = DiaryImg.init(sequelize);    // Diary 참조
-const diaryEmotion = DiaryEmotion.init(sequelize); // Diary, User, Emotion 참조
+const user = User.init(sequelize);          
+const emotion = Emotion.init(sequelize);    
+const diary = Diary.init(sequelize);     
+const follow = Follow.init(sequelize);       
+const comment = Comment.init(sequelize);     
+const diaryImg = DiaryImg.init(sequelize);    
+const diaryEmotion = DiaryEmotion.init(sequelize); 
 
 const db = {
     User: user,
@@ -37,14 +37,13 @@ const db = {
     sequelize
 };
 
-// 이렇게 처리안하면 관계성 떄문에 조회 못함 
-user.associate(db);        // User -> Diary, Comment, Follow
-emotion.associate(db);      // Emotion -> Diary, DiaryEmotion
-diary.associate(db);      // Diary -> User, Comment, DiaryImg, DiaryEmotion
-follow.associate(db);       // Follow -> User
-comment.associate(db);      // Comment -> User, Diary
-diaryImg.associate(db);     // DiaryImg -> Diary
-diaryEmotion.associate(db); // DiaryEmotion -> User, Emotion, Diary
+user.associate(db);       
+emotion.associate(db);      
+diary.associate(db);     
+follow.associate(db);       
+comment.associate(db);      
+diaryImg.associate(db);     
+diaryEmotion.associate(db); 
 
 
 sequelize.sync( { force : false } ).then(() => {
