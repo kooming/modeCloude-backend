@@ -6,7 +6,6 @@ const OpenAI = require('openai');
 
 // 글 생성
 router.post('/', createDiary)
-
 // 업로드 
 router.post('/upload', upload.single('image'), (req, res) => {
     if (!req.file) return res.status(400).json({ error: '파일이 없음' });
@@ -14,7 +13,6 @@ router.post('/upload', upload.single('image'), (req, res) => {
     const fileUrl = `http://localhost:4000/uploads/${req.file.filename}`;
     res.status(200).json({ url: fileUrl });
   }); 
-
 
   const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,

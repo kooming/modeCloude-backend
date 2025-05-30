@@ -17,11 +17,11 @@
               type: DataTypes.BIGINT,
               allowNull: false
             },
-            userEmotion: {  // 내가 선택한 감정
+            userEmotion: {  
               type: DataTypes.STRING,
               allowNull: false
             },
-            selectEmotion: {   // ai 감정 
+            selectEmotion: {   
               type: DataTypes.STRING,
               allowNull: true
             },

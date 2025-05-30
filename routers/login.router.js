@@ -3,17 +3,15 @@ const express = require('express');
 const axios = require('axios');
 const jwt = require('jsonwebtoken');
 const router = express.Router();
-const { saveKakaoUser } = require('../controllers/login.controller');
+const { saveKakaoUser, searchUsersByNickname, getUserById } = require('../controllers/login.controller');
 const { Users } = require('../models/config');
 const authMiddleware = require('../middleware/auth');
 
-// 카카오 로그인 시작 (카카오 인증 URL 리턴)
 router.get('/kakao', (req, res) => {
   const kakaoAuthUrl = `https://kauth.kakao.com/oauth/authorize?response_type=code&client_id=${process.env.KAKAO_CLIENT_ID}&redirect_uri=${process.env.KAKAO_REDIRECT_URI}`;
   res.json({ url: kakaoAuthUrl });
 });
 
-// 카카오 로그인 콜백 처리
 router.get('/kakao_login', async (req, res) => {
   const { code } = req.query;
   try {
@@ -51,7 +49,6 @@ router.get('/kakao_login', async (req, res) => {
       expiresIn: '7d', 
     });
 
-    // JWT를 쿠키에 저장
     res.cookie('token', token, {
       httpOnly: true,  
       secure: false,   
@@ -59,19 +56,17 @@ router.get('/kakao_login', async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000, 
     });
 
-    res.redirect('http://localhost:3000/main'); // 로그인 후 메인 페이지로 리다이렉트
+    res.redirect('http://localhost:3000/main'); 
   } catch (err) {
     console.error('카카오 로그인 실패:', err.message);
     res.status(500).json({ success: false, message: '카카오 로그인 실패' });
   }
 });
 
-// 로그아웃 처리
 router.get('/logout', (req, res) => {
-  res.clearCookie('token'); // 쿠키에서 JWT 삭제
-  res.redirect('http://localhost:3000/'); // 로그아웃 후 메인 페이지로 리다이렉트
+  res.clearCookie('token');
+  res.redirect('http://localhost:3000/'); 
 });
-
 
 router.get('/user', authMiddleware, (req, res) => {
   const user = req.user;
@@ -79,11 +74,11 @@ router.get('/user', authMiddleware, (req, res) => {
     nickname: user.nick_name,
     profile: user.profile_image,
     uid: user.uid,
+    bio: user.bio
   });
 });
 
 
-// 앱 전용 로그인
 router.post('/kakaoapp', async (req, res) => {
   const { access_token } = req.body;
   if (!access_token) {
@@ -122,6 +117,7 @@ router.post('/kakaoapp', async (req, res) => {
     res.status(500).json({ message: '카카오 로그인 실패' });
   }
 });
+router.get('/search/users', searchUsersByNickname);
+router.get('/:id', getUserById); 
 
-
-module.exports = router; // 라우터 내보내기
+module.exports = router;
