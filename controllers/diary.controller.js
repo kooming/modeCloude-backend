@@ -117,8 +117,6 @@ const getPublicDiaryList = async (req, res) => {
   }
 };
 
-
-
 // 이건 팔로우 상대 보기 
 const getFollowedDiaryList = async (req, res) => {
   const userId = req.user.uid;
