@@ -1,4 +1,4 @@
-const {Diary, DiaryEmotion, DiaryImg, Comment, User, Emotion, Follow } = require('../models/config')
+const { Diary, DiaryEmotion, DiaryImg, Comment, User, Emotion, Follow } = require('../models/config')
 const { Op } = require('sequelize');
 const moment = require('moment-timezone');
 
@@ -31,7 +31,7 @@ const getMyDiaryList = async (req, res) => {
           include: [
             {
               model: Emotion,
-              as: 'userEmotionData',  
+              as: 'userEmotionData',
               attributes: ['id', 'name', 'emoji', 'color']
             }
           ]
@@ -42,7 +42,7 @@ const getMyDiaryList = async (req, res) => {
           attributes: ['id']
         },
         {
-          model: DiaryImg,                
+          model: DiaryImg,
           as: 'images',
           attributes: ['image_url']
         }
@@ -56,7 +56,7 @@ const getMyDiaryList = async (req, res) => {
       isPublic: diary.is_public,
       emotion: diary.emotionLog?.userEmotionData ?? null,  // 감정 정보 전체
       commentCount: diary.comments.length,
-      images: diary.images?.map(img => img.image_url) ?? []  
+      images: diary.images?.map(img => img.image_url) ?? []
     }));
 
     res.json(result);
@@ -138,7 +138,7 @@ const getFollowedDiaryList = async (req, res) => {
     const followingIds = follows.map(f => f.following_id);
 
     if (followingIds.length === 0) {
-      return res.json([]); 
+      return res.json([]);
     }
 
     const diaries = await Diary.findAll({
@@ -181,7 +181,7 @@ const getFollowedDiaryList = async (req, res) => {
       isPublic: diary.is_public,
       emotion: diary.emotionLog?.userEmotionData ?? null,
       commentCount: diary.comments.length,
-      writer: diary.writer 
+      writer: diary.writer
     }));
 
     res.json(result);
@@ -199,8 +199,8 @@ const createDiary = async (req, res) => {
       title,
       content,
       user_id,
-      is_public: is_public === 1 ? true : false 
-    }); 
+      is_public: is_public === 1 ? true : false
+    });
 
     // 2. 이미지 저장
     const imageUrls = Array.isArray(diary_img) ? diary_img : extractImageUrls(content);
@@ -215,8 +215,8 @@ const createDiary = async (req, res) => {
     const data = await DiaryEmotion.create({
       diary_id: diary.id,
       user_id: user_id,
-      userEmotion: userEmotion,             
-      selectEmotion: selectEmotion, 
+      userEmotion: userEmotion,
+      selectEmotion: selectEmotion,
       date: new Date()
     });
     console.log("data", data)
@@ -234,9 +234,9 @@ const getDiaryDetail = async (req, res) => {
       where: { id: req.params.id },
       include: [
         {
-          model: User,                    
+          model: User,
           as: 'writer',
-          attributes: [ 'uid', 'nick_name', 'profile_image']
+          attributes: ['uid', 'nick_name', 'profile_image']
         },
         {
           model: DiaryImg,
@@ -266,7 +266,7 @@ const getDiaryDetail = async (req, res) => {
             {
               model: User,
               as: 'writer',
-              attributes: ['nick_name', 'profile_image'] 
+              attributes: ['nick_name', 'profile_image']
             }
           ],
           order: [['createdAt', 'ASC']]
@@ -330,7 +330,7 @@ const getDiaryForEdit = async (req, res) => {
 // 수정 데이터 바꾼 데이터 저장 
 const updateDiary = async (req, res) => {
   try {
-    const diaryId = Number(req.params.id); 
+    const diaryId = Number(req.params.id);
 
     // diary가 실제로 존재하는지 확인
     const diary = await Diary.findByPk(diaryId);
@@ -393,12 +393,12 @@ const updateDiary = async (req, res) => {
 const emotionOnly = async (req, res) => {
   try {
     const { user_id, userEmotion, selectEmotion } = req.body;
-    
+
     if (!user_id || !userEmotion) {
       return res.status(400).json({ message: '필수값 누락: user_id 또는 userEmotion' });
     }
     await DiaryEmotion.create({
-      diary_id: null,               
+      diary_id: null,
       user_id,
       userEmotion,
       selectEmotion,
@@ -459,7 +459,7 @@ const checkTodayWritten = async (req, res) => {
 
 // 스트림 
 const getStreak = async (req, res) => {
-  const userId = Number(req.query.uid); 
+  const userId = Number(req.query.uid);
   const KST_OFFSET = 9 * 60 * 60 * 1000;
 
   if (!userId) {
@@ -1241,5 +1241,96 @@ const getStreakApp = async (req, res) => {
   }
 };
 
-module.exports = { createDiary, getMyDiaryList, emotionOnly, checkTodayWritten, getStreak ,getWrittenWeekdays, getWrittenDates, getDiaryDetail ,  getDiaryDetail,
-  getDiaryForEdit, updateDiary, getFollowedDiaryList, deleteDiary, getPublicDiaryList , getRichDiaryList,getFollowedDiaryListForApp, createDiaryApp, getFollowingsTodayDiariesApp, updateDiaryApp, getEmotionCalendarDataApp, getTodayDiaryApp, getRandomDiaryApp, getWrittenDatesApp, emotionOnlyApp, getStreakApp } ;
+
+// 조회 로직 전문
+const getListSearch = async (req, res) => {
+  const userId = req.user.uid;
+  const { emotion, order, public: publicQuery, title } = req.query;
+
+  console.log('User ID:', userId);
+  console.log('Query Params:', req.query);
+
+  try {
+    const diaryWhereClause = { user_id: userId };
+
+    if (publicQuery !== undefined && publicQuery !== null && publicQuery !== '') {
+      diaryWhereClause.is_public = publicQuery === 'true';
+    }
+    if (title && title.length > 0) { 
+      diaryWhereClause.title = {
+        [Op.like]: `${title}%` 
+      };
+    }
+    const includeClauses = [
+      {
+        model: Comment,
+        as: 'comments',
+        attributes: ['id'],
+      },
+      {
+        model: DiaryImg,
+        as: 'images',
+        attributes: ['image_url'],
+      },
+    ];
+    const emotionLogInclude = {
+      model: DiaryEmotion,
+      as: 'emotionLog',
+      include: [
+        {
+          model: Emotion,
+          as: 'userEmotionData',
+          attributes: ['id', 'name', 'emoji', 'color'],
+        },
+        {
+          model: Emotion,
+          as: 'aiEmotionData', // diaryEmotion.js에 정의된 별칭 사용
+          attributes: ['id', 'name', 'emoji', 'color'],
+          required: false // 데이터가 없을 수도 있으므로 LEFT JOIN
+        },
+      ],
+    };
+
+    if (emotion) {
+      emotionLogInclude.where = { userEmotion: emotion };
+
+      emotionLogInclude.required = true;
+    } else {
+
+      emotionLogInclude.required = false;
+    }
+    includeClauses.unshift(emotionLogInclude);
+
+
+    const sortOrder = (order && order.toUpperCase() === 'ASC') ? 'ASC' : 'DESC';
+
+    const diaries = await Diary.findAll({
+      where: diaryWhereClause,
+      order: [['createdAt', sortOrder]],
+      include: includeClauses,
+    });
+
+    const result = diaries.map((diary) => ({
+      id: diary.id,
+      title: diary.title,
+      content: diary.content,
+      createdAt: diary.createdAt,
+      isPublic: diary.is_public,
+      emotion: diary.emotionLog?.userEmotionData ?? null,
+      selectEmotion: diary.emotionLog?.aiEmotionData ?? null,
+      commentCount: diary.comments ? diary.comments.length : 0,
+      images: diary.images?.map(img => img.image_url) ?? [],
+    }));
+
+    res.json(result);
+  } catch (error) {
+    console.error('일기 목록 불러오기 중 에러 발생:', error);
+    res.status(500).json({ message: '일기 목록 불러오기 실패' });
+  }
+};
+
+
+module.exports = {
+  createDiary, getMyDiaryList, emotionOnly, checkTodayWritten, getStreak, getWrittenWeekdays, getWrittenDates, getDiaryDetail, getDiaryDetail,
+  getDiaryForEdit, updateDiary, getFollowedDiaryList, deleteDiary, getPublicDiaryList, getListSearch
+};

@@ -43,7 +43,7 @@
       }
 
       static associate(models) {
-        models.DiaryEmotion.belongsTo(models.User, {foreignKey: "user_id",targetKey: "uid",as: "writer"});
+        models.DiaryEmotion.belongsTo(models.User, {foreignKey: "user_id",targetKey: "uid",as: "writer",onDelete: "CASCADE"});
         models.DiaryEmotion.belongsTo(models.Emotion, {foreignKey: "userEmotion",targetKey: "id",as: "userEmotionData"});
         models.DiaryEmotion.belongsTo(models.Emotion, {foreignKey: "selectEmotion",targetKey: "id",as: "aiEmotionData"});
         models.DiaryEmotion.belongsTo(models.Diary, {foreignKey: "diary_id",targetKey: "id",as: "diary"});

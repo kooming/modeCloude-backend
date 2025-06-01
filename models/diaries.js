@@ -39,7 +39,7 @@ class Diary extends Model {
     }
 
     static associate(models) {
-        models.Diary.belongsTo(models.User, {foreignKey: "user_id", targetKey: "uid", as: "writer"});
+        models.Diary.belongsTo(models.User, {foreignKey: "user_id", targetKey: "uid", as: "writer" ,onDelete: "CASCADE" });
         models.Diary.hasMany(models.Comment, {foreignKey: "diary_id", sourceKey: "id", as: "comments"});
         models.Diary.hasMany(models.DiaryImg, {foreignKey: "diary_id", sourceKey: "id",as: "images", onDelete: "CASCADE",});
         models.Diary.hasOne(models.DiaryEmotion, {foreignKey: "diary_id",sourceKey: "id",as: "emotionLog"});
