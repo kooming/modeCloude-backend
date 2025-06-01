@@ -1332,5 +1332,6 @@ const getListSearch = async (req, res) => {
 
 module.exports = {
   createDiary, getMyDiaryList, emotionOnly, checkTodayWritten, getStreak, getWrittenWeekdays, getWrittenDates, getDiaryDetail, getDiaryDetail,
-  getDiaryForEdit, updateDiary, getFollowedDiaryList, deleteDiary, getPublicDiaryList, getListSearch
-};
+  getDiaryForEdit, updateDiary, getFollowedDiaryList, deleteDiary, getPublicDiaryList, getListSearch, getRichDiaryList, getFollowedDiaryListForApp,createDiaryApp,updateDiaryApp,
+  getEmotionCalendarDataApp, getTodayDiaryApp, getRandomDiaryApp, emotionOnlyApp, getWrittenDatesApp, getStreakApp, getFollowingsTodayDiariesApp
+}
