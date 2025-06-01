@@ -7,6 +7,7 @@ const { saveKakaoUser, searchUsersByNickname, getUserById } = require('../contro
 const { Users } = require('../models/config');
 const authMiddleware = require('../middleware/auth');
 const authAppMiddleware = require('../middleware/authAppMiddleware');
+const { getFollowersListApp, getFollowingsListApp } = require('../controllers/user.controller');
 
 router.get('/kakao', (req, res) => {
   const kakaoAuthUrl = `https://kauth.kakao.com/oauth/authorize?response_type=code&client_id=${process.env.KAKAO_CLIENT_ID}&redirect_uri=${process.env.KAKAO_REDIRECT_URI}`;
@@ -93,7 +94,6 @@ router.get('/app/user', authAppMiddleware, (req, res) => {
 
 router.post('/kakaoapp', async (req, res) => {
   const { id, nickname, properties, userAccessToken } = req.body;
-
   if (!userAccessToken || !id || !nickname) {
     return res.status(400).json({ message: '필수 정보 누락' });
   }
@@ -101,34 +101,29 @@ router.post('/kakaoapp', async (req, res) => {
   try {
     const kakaoId = Number(id);
     const profile = properties?.profile_image ?? '';
-
-    // DB에 유저 저장
     const { ok, user, message } = await saveKakaoUser(kakaoId, nickname, profile);
-    if (!ok) return res.status(500).json({ message });
-
-    // JWT 토큰 발급
+    if (!ok) {
+      return res.status(500).json({ message });
+    }
     const token = jwt.sign({ userId: user.uid }, process.env.JWT_SECRET, {
       expiresIn: '30d',
     });
 
-    // 프론트로 응답
-    res.json({
+    const responseData = {
       token,
       user: {
         uid: user.uid,
         nickname: user.nick_name,
         profile: user.profile_image,
       },
-    });
+    };
+    res.json(responseData);
+    
   } catch (err) {
-    console.error('앱 카카오 로그인 실패:', err.message);
-    res.status(500).json({ message: '카카오 로그인 실패' });
+    res.status(500).json({ message: '카카오 로그인 실패', error: err.message });
   }
 });
 
-
-
 router.get('/search/users', searchUsersByNickname);
 router.get('/:id', getUserById); 
-
 module.exports = router;

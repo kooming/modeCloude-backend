@@ -1,11 +1,11 @@
 const router = require('express').Router();
-const { createDiary } = require('../controllers/diary.controller')
+const { createDiary, createDiaryApp } = require('../controllers/diary.controller')
 const {upload }= require('../middleware/imgUpload');
 const OpenAI = require('openai');
-
+const authAppMiddleware = require('../middleware/authAppMiddleware');
 
 // 글 생성
-router.post('/', createDiary)
+router.post('/', authAppMiddleware, createDiary)
 // 업로드 
 router.post('/upload', upload.single('image'), (req, res) => {
     if (!req.file) return res.status(400).json({ error: '파일이 없음' });
@@ -19,7 +19,7 @@ router.post('/upload', upload.single('image'), (req, res) => {
   });
   
   // AI 임 
-  router.post('/analyze', async (req, res) => {
+  router.post('/analyze',authAppMiddleware, async (req, res) => {
     const { content } = req.body;
   
     if (!content) {
@@ -63,6 +63,7 @@ router.post('/upload', upload.single('image'), (req, res) => {
     }
   });
   
-  
 
+// 앱전용 라우터 -----------------------------
+router.post('/app', authAppMiddleware, createDiaryApp)
 module.exports = router

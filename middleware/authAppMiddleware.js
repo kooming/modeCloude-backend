@@ -22,7 +22,8 @@ const authAppMiddleware = async (req, res, next) => {
         return res.status(401).json({ message: '유효하지 않은 사용자입니다.' });
         }
 
-        req.user = user;
+        //req.user = user;
+        req.user = { uid: user.uid };
         next();
     } catch (err) {
         console.error('JWT 앱 인증 실패:', err.message);

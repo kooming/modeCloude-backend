@@ -1,8 +1,8 @@
 const router = require('express').Router();
 const { getEmotions } = require('../controllers/emotion.controller');
-const { getMyDiaryList, emotionOnly, checkTodayWritten } = require('../controllers/diary.controller');
+const { getMyDiaryList, emotionOnly, checkTodayWritten, getTodayDiaryApp, getRandomDiaryApp, getWrittenDatesApp, emotionOnlyApp, getStreakApp } = require('../controllers/diary.controller');
 const authMiddleware = require('../middleware/auth');
-const { getStreak, getWrittenDates, getWrittenWeekdays,  getFollowedDiaryList } = require('../controllers/diary.controller')
+const { getStreak, getWrittenDates, getWrittenWeekdays,  getFollowedDiaryList, getRichDiaryList, getFollowedDiaryListForApp, getEmotionCalendarDataApp } = require('../controllers/diary.controller')
 const authAppMiddleware = require('../middleware/authAppMiddleware');
 
 //  모든 감정
@@ -24,6 +24,14 @@ router.get('/written-dates', authMiddleware, getWrittenDates);
 
 
 //------------ 앱 라우터
-router.get('/app/mydiary', authAppMiddleware, getMyDiaryList);
+router.get('/app/mydiary', authAppMiddleware, getRichDiaryList);
+router.get('/app/diary/followed', authAppMiddleware, getFollowedDiaryListForApp);
+router.get('/app/calendar-emotions', authAppMiddleware, getEmotionCalendarDataApp);
+router.get('/app/todayDiary', authAppMiddleware, getTodayDiaryApp);
+router.get('/app/randomDiary', authAppMiddleware, getRandomDiaryApp);
+router.get('/app/checkTodayWritten', authAppMiddleware, checkTodayWritten);
+router.get('/app/written-dates', authAppMiddleware, getWrittenDatesApp);
+router.post('/app/emotionOnly', authAppMiddleware, emotionOnlyApp);
+router.get('/app/streak', authAppMiddleware, getStreakApp);
 
 module.exports = router;
