@@ -554,7 +554,7 @@ const getWrittenDates = async (req, res) => {
   }
 };
 
-
+삭제 
 const deleteDiary = async (req, res) => {
   try {
     const diaryId = Number(req.params.id);
@@ -570,6 +570,8 @@ const deleteDiary = async (req, res) => {
     res.status(500).json({ success: false, message: '일기 삭제 중 오류가 발생했습니다.' });
   }
 };
+ 
+
 
 module.exports = { createDiary, getMyDiaryList, emotionOnly, checkTodayWritten, getStreak ,getWrittenWeekdays, getWrittenDates, getDiaryDetail ,  getDiaryDetail,
   getDiaryForEdit, updateDiary, getFollowedDiaryList, deleteDiary, getPublicDiaryList };

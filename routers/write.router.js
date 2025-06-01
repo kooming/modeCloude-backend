@@ -10,7 +10,8 @@ router.post('/', createDiary)
 router.post('/upload', upload.single('image'), (req, res) => {
     if (!req.file) return res.status(400).json({ error: '파일이 없음' });
       
-    const fileUrl = `http://localhost:4000/uploads/${req.file.filename}`;
+    // const fileUrl = `http://localhost:4000/uploads/${req.file.filename}`;
+    const fileUrl = `https://cuekim.shop/uploads/${req.file.filename}`;
     res.status(200).json({ url: fileUrl });
   }); 
 

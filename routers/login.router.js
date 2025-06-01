@@ -56,7 +56,8 @@ router.get('/kakao_login', async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000, 
     });
 
-    res.redirect('http://localhost:3000/main'); 
+    // res.redirect('http://localhost:3000/main'); 
+       res.redirect('https://cuekim.shop/main'); 
   } catch (err) {
     console.error('카카오 로그인 실패:', err.message);
     res.status(500).json({ success: false, message: '카카오 로그인 실패' });
@@ -65,7 +66,8 @@ router.get('/kakao_login', async (req, res) => {
 
 router.get('/logout', (req, res) => {
   res.clearCookie('token');
-  res.redirect('http://localhost:3000/'); 
+  // res.redirect('http://localhost:3000/'); 
+  res.redirect('https://cuekim.shop/'); 
 });
 
 router.get('/user', authMiddleware, (req, res) => {
@@ -117,7 +119,9 @@ router.post('/kakaoapp', async (req, res) => {
     res.status(500).json({ message: '카카오 로그인 실패' });
   }
 });
+
 router.get('/search/users', searchUsersByNickname);
+
 router.get('/:id', getUserById); 
 
 module.exports = router;
