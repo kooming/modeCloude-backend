@@ -1,8 +1,45 @@
 const { User, Diary, Follow } = require('../models/config');
 const { Op } = require('sequelize')
 
+// const saveKakaoUser = async (kakaoId, nickname, profile) => {
+//   try {
+//     const [user, created] = await User.findOrCreate({
+//       where: { uid: kakaoId },                     
+//       defaults: { nick_name: nickname, profile_image: profile },
+//     });
+
+//     if (
+//       !created &&
+//       (user.nick_name !== nickname || user.profile_image !== profile)
+//     ) {
+//       await user.update({ nick_name: nickname, profile_image: profile });
+//     }
+
+//     return { ok: true, user };            
+//   } catch (err) {
+//     console.error(err);
+//     return { ok: false, message: 'DB 저장 실패' };
+//   }
+// };
+
 const saveKakaoUser = async (kakaoId, nickname, profile) => {
   try {
+    console.log('================================');
+    console.log('=== saveKakaoUser 함수 시작 ===');
+    console.log('================================');
+    console.log('입력 파라미터:');
+    console.log('- kakaoId:', kakaoId, '(타입:', typeof kakaoId, ')');
+    console.log('- nickname:', nickname, '(타입:', typeof nickname, ')');
+    console.log('- profile:', profile, '(타입:', typeof profile, ')');
+    
+    console.log('\n--- User.findOrCreate 실행 전 ---');
+    console.log('where 조건:', { uid: kakaoId });
+    console.log('defaults 값:', { 
+      uid: kakaoId,
+      nick_name: nickname, 
+      profile_image: profile,
+    });
+
     const [user, created] = await User.findOrCreate({
       where: { uid: kakaoId },
       defaults: { 
@@ -12,26 +49,17 @@ const saveKakaoUser = async (kakaoId, nickname, profile) => {
       },
     });
 
-    if (!created) {
-      if (user.nick_name !== nickname || user.profile_image !== profile) {
-        const updateResult = await user.update({ nick_name: nickname, profile_image: profile });
-      }
+    if (
+      !created &&
+      (user.nick_name !== nickname || user.profile_image !== profile)
+    ) {
+      await user.update({ nick_name: nickname, profile_image: profile });
     }
 
     return { ok: true, user };            
   } catch (err) {
-    if (err.errors) {
-      console.log('Sequelize 에러 상세:');
-      err.errors.forEach((error, index) => {
-        console.log(`  ${index + 1}. ${error.message} (필드: ${error.path})`);
-      });
-    }
-    
-    if (err.original) {
-      console.log('원본 DB 오류:', err.original);
-    }
-    
-    return { ok: false, message: `DB 저장 실패: ${err.message}` };
+    console.error(err);
+    return { ok: false, message: 'DB 저장 실패' };
   }
 };
 
