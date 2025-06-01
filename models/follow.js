@@ -36,8 +36,8 @@ class Follow extends Model {
   }
 
   static associate(models) {
-    models.Follow.belongsTo(models.User, { foreignKey: 'follower_id', targetKey: 'uid', as: 'follower' });
-    models.Follow.belongsTo(models.User, { foreignKey: 'following_id', targetKey: 'uid', as: 'following' });
+    models.Follow.belongsTo(models.User, { foreignKey: 'follower_id', targetKey: 'uid', as: 'follower',onDelete: "CASCADE" });
+    models.Follow.belongsTo(models.User, { foreignKey: 'following_id', targetKey: 'uid', as: 'following',onDelete: "CASCADE" });
   }
 }
 

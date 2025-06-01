@@ -12,6 +12,8 @@ const DetailRouter = require('./routers/detail.router')
 const EditRouter = require('./routers/edit.router')
 const MypageRouter = require('./routers/mypage.router')
 const FollowRouter = require('./routers/follow.router')
+const SettingsRouter = require('./routers/settings.router.js')
+const ListRouter = require('./routers/list.router.js')
 
 const cookieParser = require('cookie-parser');
 
@@ -36,6 +38,8 @@ app.use('/detail', DetailRouter)
 app.use('/edit', EditRouter)
 app.use('/mypage', MypageRouter);
 app.use('/follow', FollowRouter);
+app.use('/api/setting', SettingsRouter);
+app.use('/list', ListRouter)
 
 app.listen(4000, (req,res)=> {
     console.log("server on")

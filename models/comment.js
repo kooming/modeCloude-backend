@@ -37,7 +37,7 @@ class Comment extends Model {
     }
 
     static associate(models) {
-        models.Comment.belongsTo(models.User, {foreignKey: "user_id", targetKey: "uid", as: "writer"})
+        models.Comment.belongsTo(models.User, {foreignKey: "user_id", targetKey: "uid", as: "writer",onDelete: "CASCADE"})
         models.Comment.belongsTo(models.Diary, {foreignKey: "diary_id", targetKey: "id", as: "diary"})
     }
 }
