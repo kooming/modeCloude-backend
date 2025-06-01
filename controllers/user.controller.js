@@ -48,4 +48,50 @@ const getFollowingsListApp = async (req, res) => {
   }
 };
 
-module.exports = { userInfoUpdateApp, getFollowersListApp, getFollowingsListApp }; 
+// 앱용 사용자 프로필 정보 조회
+const getUserProfileApp = async (req, res) => {
+  try {
+    const { uid } = req.params; 
+    if (!uid) {
+      return res.status(400).json({ success: false, message: '사용자 UID는 필수입니다.' });
+    }
+
+    const user = await User.findByPk(uid, {
+      attributes: ['uid', 'nick_name', 'profile_image', 'bio'],
+    });
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: '사용자를 찾을 수 없습니다.' });
+    }
+
+    const followerCount = await Follow.count({
+      where: { following_id: uid },
+    });
+
+    const followingCount = await Follow.count({
+      where: { follower_id: uid },
+    });
+    const { Diary } = require('../models/config');
+    const publicDiaryCount = await Diary.count({
+      where: {
+        user_id: uid, 
+        is_public: true,
+      },
+    });
+
+    res.json({
+      success: true,
+      data: {
+        ...user.toJSON(),
+        followerCount,
+        followingCount,
+        publicDiaryCount,
+      },
+    });
+  } catch (err) {
+    console.error('getUserProfileApp 오류:', err);
+    res.status(500).json({ success: false, message: '서버 오류로 프로필 정보 조회에 실패했습니다.' });
+  }
+};
+
+module.exports = { userInfoUpdateApp, getFollowersListApp, getFollowingsListApp, getUserProfileApp }; 
