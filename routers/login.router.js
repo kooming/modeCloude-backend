@@ -80,7 +80,6 @@ router.get('/user', authMiddleware, (req, res) => {
   });
 });
 
-
 router.post('/kakaoapp', async (req, res) => {
   const { access_token } = req.body;
   if (!access_token) {

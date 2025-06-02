@@ -33,8 +33,8 @@ app.use(cookieParser());
 app.use('/login', LoginRouter);
 app.use('/main',  MainRouter);
 app.use('/write', WriteRouter);
-app.use('/detail', DetailRouter)
-app.use('/edit', EditRouter)
+app.use('/detail', DetailRouter);
+app.use('/edit', EditRouter);
 app.use('/mypage', MypageRouter);
 app.use('/follow', FollowRouter);
 
