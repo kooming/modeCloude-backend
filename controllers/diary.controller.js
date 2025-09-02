@@ -22,7 +22,7 @@ const getMyDiaryList = async (req, res) => {
       where: { user_id: userId },
       order: [['createdAt', 'DESC']],
       limit: 20,
-      attributes: ['id', 'title', 'is_public', 'createdAt'],
+      attributes: ['id', 'title', 'content' ,'is_public', 'createdAt'],
       include: [
         {
           model: DiaryEmotion,
@@ -51,6 +51,7 @@ const getMyDiaryList = async (req, res) => {
     const result = diaries.map((diary) => ({
       id: diary.id,
       title: diary.title,
+      content: diary.content, 
       createdAt: diary.createdAt,
       isPublic: diary.is_public,
       emotion: diary.emotionLog?.userEmotionData ?? null,  // 감정 정보 전체
@@ -67,6 +68,7 @@ const getMyDiaryList = async (req, res) => {
 
 // 이건 그 마이페이지 공개된 일기 보여줄때 쓸거 
 const getPublicDiaryList = async (req, res) => {
+
   const targetUid = Number(req.params.uid);
 
   try {
@@ -74,7 +76,7 @@ const getPublicDiaryList = async (req, res) => {
       where: { user_id: targetUid, is_public: true },
       order: [['createdAt', 'DESC']],
       limit: 20,
-      attributes: ['id', 'title', 'is_public', 'createdAt'],
+      attributes: ['id', 'title', 'content', 'is_public', 'createdAt'],
       include: [
         {
           model: DiaryEmotion,
@@ -103,6 +105,7 @@ const getPublicDiaryList = async (req, res) => {
     const result = diaries.map((diary) => ({
       id: diary.id,
       title: diary.title,
+      content: diary.content, 
       createdAt: diary.createdAt,
       isPublic: diary.is_public,
       emotion: diary.emotionLog?.userEmotionData ?? null,
@@ -141,7 +144,7 @@ const getFollowedDiaryList = async (req, res) => {
       },
       order: [['createdAt', 'DESC']],
       limit: 20,
-      attributes: ['id', 'title', 'is_public', 'createdAt'],
+      attributes: ['id', 'title', 'content','is_public', 'createdAt'],
       include: [
         {
           model: DiaryEmotion,
@@ -170,6 +173,7 @@ const getFollowedDiaryList = async (req, res) => {
     const result = diaries.map((diary) => ({
       id: diary.id,
       title: diary.title,
+      content: diary.content, 
       createdAt: diary.createdAt,
       isPublic: diary.is_public,
       emotion: diary.emotionLog?.userEmotionData ?? null,
@@ -327,7 +331,7 @@ const updateDiary = async (req, res) => {
     await DiaryImg.destroy({ where: { diary_id: diaryId } });
 
     const imageUrls = extractImageUrls(content);
-
+    
     if (imageUrls.length > 0) {
       const imgRows = imageUrls.map((url) => ({
         diary_id: diaryId,
@@ -362,7 +366,7 @@ const updateDiary = async (req, res) => {
 const emotionOnly = async (req, res) => {
   try {
     const { user_id, userEmotion, selectEmotion } = req.body;
-    
+    const nowKST = new Date(Date.now() + 9 * 60 * 60 * 1000);
     if (!user_id || !userEmotion) {
       return res.status(400).json({ message: '필수값 누락: user_id 또는 userEmotion' });
     }
@@ -371,7 +375,7 @@ const emotionOnly = async (req, res) => {
       user_id,
       userEmotion,
       selectEmotion,
-      date: new Date()
+      date: nowKST
     });
 
     res.status(201).json({ success: true });
@@ -554,7 +558,7 @@ const getWrittenDates = async (req, res) => {
   }
 };
 
-
+//삭제 
 const deleteDiary = async (req, res) => {
   try {
     const diaryId = Number(req.params.id);
@@ -570,6 +574,8 @@ const deleteDiary = async (req, res) => {
     res.status(500).json({ success: false, message: '일기 삭제 중 오류가 발생했습니다.' });
   }
 };
+ 
+
 
 module.exports = { createDiary, getMyDiaryList, emotionOnly, checkTodayWritten, getStreak ,getWrittenWeekdays, getWrittenDates, getDiaryDetail ,  getDiaryDetail,
   getDiaryForEdit, updateDiary, getFollowedDiaryList, deleteDiary, getPublicDiaryList };

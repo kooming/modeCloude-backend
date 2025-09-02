@@ -24,7 +24,8 @@ app.use("/uploads", express.static(path.join(__dirname, "public/upload")));
 app.use(express.json());
 app.use(express.urlencoded({extended : false}))
 app.use(cors({
-    origin: 'http://localhost:3000',  // React 서버 주소
+    // origin: 'http://localhost:3000',  // React 서버 주소
+    origin: 'https://cuekim.shop',  // React 배포 주소
     credentials: true  // 이거 해줘야 쿠기값 전달됌 중요!! 그리고 위에 * 이걸로 보내면안됌...
   }));
 app.use(cookieParser());
@@ -32,8 +33,8 @@ app.use(cookieParser());
 app.use('/login', LoginRouter);
 app.use('/main',  MainRouter);
 app.use('/write', WriteRouter);
-app.use('/detail', DetailRouter)
-app.use('/edit', EditRouter)
+app.use('/detail', DetailRouter);
+app.use('/edit', EditRouter);
 app.use('/mypage', MypageRouter);
 app.use('/follow', FollowRouter);
 
